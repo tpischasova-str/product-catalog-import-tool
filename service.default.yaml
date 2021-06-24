@@ -2,7 +2,7 @@ port: 8085
 debug: false
 
 product:
-  source: ./data/source/products
+  source: ./data/source/products/
   report: ./data/result/report
   sent: ./data/source/processed/products
   in_progress: ./data/source/inprogress
@@ -12,8 +12,8 @@ product:
   ontology: ./data/ontology/rules.csv
 offer:
   source: ./data/source/offers/
-  sent: ./data/source/processed/offers 
-  
+  sent: ./data/source/processed/offers
+
 tradeshift_api:
   # set Tradeshift API parameters from API Access To Own Account in Tradeshift pannel
   base_url:

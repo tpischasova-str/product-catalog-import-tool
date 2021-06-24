@@ -7,12 +7,14 @@ import (
 	"ts/config"
 	"ts/externalAPI/rest"
 	"ts/externalAPI/tradeshiftAPI"
-	"ts/mapping"
-	"ts/ontology"
-	"ts/ontologyValidator"
-	"ts/reports"
-	"ts/server"
-	"ts/server/http/handlers"
+	"ts/offerImport/importHandler"
+	"ts/offerImport/offerReader"
+	"ts/productImport"
+	"ts/productImport/mapping"
+	"ts/productImport/ontologyRead"
+	"ts/productImport/ontologyValidator"
+	"ts/productImport/reports"
+	"ts/productImport/tradeshiftImportHandler"
 )
 
 type options = []dig.ProvideOption
@@ -24,17 +26,18 @@ type entry struct {
 
 var diConfig = []entry{
 	{constructor: config.Get},
-	{constructor: mapping.GetHandler},
-	{constructor: handlers.New},
-	{constructor: server.New},
+	{constructor: mapping.NewMappingHandler},
 	{constructor: adapters.NewFileManager},
 	{constructor: adapters.NewHandler},
-	{constructor: ontology.NewRulesHandler},
+	{constructor: ontologyRead.NewRulesHandler},
+	{constructor: offerReader.NewOfferReader},
 	{constructor: ontologyValidator.NewValidator},
 	{constructor: reports.NewReportsHandler},
 	{constructor: rest.NewRestClient},
 	{constructor: tradeshiftAPI.NewTradeshiftAPI},
-	{constructor: tradeshiftAPI.NewTradeshiftHandler},
+	{constructor: tradeshiftImportHandler.NewTradeshiftHandler},
+	{constructor: productImport.NewProductImportHandler},
+	{constructor: importHandler.NewImportOfferHandler},
 }
 
 func BuildContainer() *dig.Container {

@@ -91,6 +91,19 @@ func GetFileName(path string) string {
 	return strings.Join(res[0:(len(res)-1)], ".")
 }
 
+func GetFileExt(filePath string) string {
+	ext := strings.TrimLeft(filepath.Ext(filePath), ".")
+	return ext
+}
+
+func isXLSXFile(path string) bool {
+	ext := strings.ToLower(GetFileExt(path))
+	if ext == "xlsx" || ext == "xls" {
+		return true
+	}
+	return false
+}
+
 func MoveFile(oldLocation string, newLocation string) error {
 	err := os.Rename(oldLocation, newLocation)
 	return err
@@ -130,8 +143,18 @@ func GetFiles(folder string) []string {
 			file = append(file, name)
 		}
 	}
-
 	return file
+}
+
+func GetXLSXFiles(path string) []string {
+	var res []string
+	files := GetFiles(path)
+	for _, filePath := range files {
+		if isXLSXFile(filePath) {
+			res = append(res, filePath)
+		}
+	}
+	return res
 }
 
 func MoveToPath(filePath string, destination string) (string, error) {
@@ -141,4 +164,13 @@ func MoveToPath(filePath string, destination string) (string, error) {
 		return filePath, err
 	}
 	return destinationFile, nil
+}
+
+func AddSlashToPath(path string) string {
+	last := path[len(path)-1:]
+	if last == "/" {
+		return path
+	} else {
+		return fmt.Sprintf("%v/", path)
+	}
 }

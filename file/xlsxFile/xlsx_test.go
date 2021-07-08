@@ -216,3 +216,31 @@ func Test_parsePath(t *testing.T) {
 		})
 	}
 }
+
+func TestBuildPath(t *testing.T) {
+	type args struct {
+		filePath  string
+		sheetName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "positive: file path and sheet name should be joined to one path",
+			args: args{
+				filePath:  "./data/input.xlsx",
+				sheetName: "Products",
+			},
+			want: "./data/input.xlsx::Products",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := BuildPath(tt.args.filePath, tt.args.sheetName); got != tt.want {
+				t.Errorf("BuildPath() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

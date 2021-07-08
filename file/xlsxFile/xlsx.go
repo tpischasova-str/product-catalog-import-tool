@@ -89,3 +89,7 @@ func processSheetData(sheet *xlsx.Sheet) [][]string {
 func Write(filepath string, data [][]string) error {
 	return fmt.Errorf("write method is not implemented yet")
 }
+
+func BuildPath(filePath string, sheetName string) string {
+	return fmt.Sprintf("%v%v%v", filePath, pathDelimiter, sheetName)
+}

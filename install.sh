@@ -2,9 +2,6 @@
 function create_config {
   DIR=$1
   cat >./service.yaml <<EOF
-port: 8085
-debug: false
-
 product:
   source: ${DIR}/data/source/products/
   report: ${DIR}/data/result/report/
@@ -17,7 +14,13 @@ product:
 offer:
   source: ${DIR}/data/source/offers/
   sent: ${DIR}/data/source/processed/offers/
-
+common:
+  source: ${DIR}/data/source/
+  sent: ${DIR}/data/source/processed/
+  sheet:
+    products: "Products"
+    offers: "Offers"
+    failures: "Attributes"
 tradeshift_api:
   # set Tradeshift API parameters from API Access To Own Account in Tradeshift pannel
   base_url:

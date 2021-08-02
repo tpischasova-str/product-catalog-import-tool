@@ -33,10 +33,11 @@ func NewOfferImportHandler(deps Deps) *OfferImportHandler {
 	}
 }
 
-func (o *OfferImportHandler) Run() {
+func (o *OfferImportHandler) RunCSV() {
 	paths := adapters.GetFiles(o.sourcePath)
 	if len(paths) == 0 {
-		log.Fatalf("Offer Import failed: please, put file with offers into %v", o.sourcePath)
+		log.Printf("Offer Import failed: please, put file with offers into %v", o.sourcePath)
+		return
 	}
 
 	for _, path := range paths {
@@ -49,6 +50,7 @@ func (o *OfferImportHandler) processOffers(path string) {
 	if err != nil {
 		log.Printf("Offer Import failed: source file was not replaced: %v", err)
 	}
+
 	o.importHandler.ImportOffers(offers)
 }
 
@@ -57,7 +59,9 @@ func (o *OfferImportHandler) uploadOffers(path string) ([]offerReader.RawOffer, 
 
 	offers := o.offerReader.UploadOffers(o.getSourcePath(path))
 	if len(offers) == 0 {
-		return nil, fmt.Errorf("Offer Upload failed: 0 offers were loaded from %v. Please, check file and try again", o.sourcePath)
+		return nil, fmt.Errorf(
+			"Offer Upload failed: 0 offers were loaded from %v. Please, check file and try again",
+			o.sourcePath)
 	}
 	err := o.processSourceFile(path)
 	return offers, err

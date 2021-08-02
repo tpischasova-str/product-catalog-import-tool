@@ -1,10 +1,12 @@
 package config
 
 type RawServiceConfig struct {
-	Port                 uint16                  `yaml:"port" validate:"required"`
-	ProductCatalogConfig RawProductCatalogConfig `yaml:"product" validate:"required"`
-	OfferCatalogConfig   RawOfferCatalogConfig   `yaml:"offer" validate:"required"`
-	TradeshiftAPIConfig  RawTradeshiftAPIConfig  `yaml:"tradeshift_api" validate:"required"`
+	Port                   uint16                    `yaml:"port"`
+	ProductCatalogConfig   RawProductCatalogConfig   `yaml:"product" validate:"required"`
+	OfferCatalogConfig     RawOfferCatalogConfig     `yaml:"offer" validate:"required"`
+	OfferItemCatalogConfig RawOfferItemCatalogConfig `yaml:"offer_item" validate:"required"`
+	CommonConfig           RawCommonCatalogConfig    `yaml:"common" validate:"required"`
+	TradeshiftAPIConfig    RawTradeshiftAPIConfig    `yaml:"tradeshift_api" validate:"required"`
 }
 
 type RawProductCatalogConfig struct {
@@ -24,6 +26,31 @@ type RawOfferCatalogConfig struct {
 	SentPath   string `yaml:"sent"`
 }
 
+type RawOfferItemCatalogConfig struct {
+	SourcePath        string `yaml:"source"`
+	SuccessResultPath string `yaml:"success_result"`
+	ReportPath        string `yaml:"report"`
+	SentPath          string `yaml:"sent"`
+}
+
+type RawCommonCatalogConfig struct {
+	SourcePath string         `yaml:"source"`
+	SentPath   string         `yaml:"sent"`
+	Sheet      RawSheetConfig `yaml:"sheet"`
+}
+
+type RawSheetConfig struct {
+	Products   string               `yaml:"products"`
+	Offers     string               `yaml:"offers"`
+	OfferItems RawSheetParamsConfig `yaml:"offer_items"`
+	Failures   string               `yaml:"failures"`
+}
+
+type RawSheetParamsConfig struct {
+	Name               string `yaml:"name"`
+	HeaderColumnsCount int    `yaml:"header_columns_count"`
+}
+
 type RawTradeshiftAPIConfig struct {
 	APIBaseURL     string `yaml:"base_url" validate:"required"`
 	ConsumerKey    string `yaml:"consumer_key" validate:"required"`
@@ -31,6 +58,8 @@ type RawTradeshiftAPIConfig struct {
 	Token          string `yaml:"token" validate:"required"`
 	TokenSecret    string `yaml:"token_secret" validate:"required"`
 	TenantId       string `yaml:"tenant_id" validate:"required"`
+	Currency       string `yaml:"currency" validate:"required"`
+	FileLocale     string `yaml:"file_locale" validate:"required"`
 }
 
 func (c *RawServiceConfig) ToConfig() *ServiceConfig {
@@ -60,6 +89,35 @@ func (c *RawOfferCatalogConfig) ToConfig() *OfferCatalogConfig {
 	}
 }
 
+func (c *RawOfferItemCatalogConfig) ToConfig() *OfferItemCatalogConfig {
+	return &OfferItemCatalogConfig{
+		SourcePath:        c.SourcePath,
+		SuccessResultPath: c.SuccessResultPath,
+		ReportPath:        c.ReportPath,
+		SentPath:          c.SentPath,
+	}
+}
+
+func (c *RawCommonCatalogConfig) ToConfig() *CommonConfig {
+	return &CommonConfig{
+		SourcePath: c.SourcePath,
+		SentPath:   c.SentPath,
+		Sheet: &SheetConfig{
+			Products:   c.Sheet.Products,
+			Offers:     c.Sheet.Offers,
+			Failures:   c.Sheet.Failures,
+			OfferItems: c.Sheet.OfferItems.ToConfig(),
+		},
+	}
+}
+
+func (c *RawSheetParamsConfig) ToConfig() *SheetParamsConfig {
+	return &SheetParamsConfig{
+		Name:            c.Name,
+		HeaderRowsCount: c.HeaderColumnsCount,
+	}
+}
+
 func (t *RawTradeshiftAPIConfig) ToConfig() *TradeshiftAPIConfig {
 	return &TradeshiftAPIConfig{
 		APIBaseURL:     t.APIBaseURL,
@@ -68,5 +126,7 @@ func (t *RawTradeshiftAPIConfig) ToConfig() *TradeshiftAPIConfig {
 		Token:          t.Token,
 		TokenSecret:    t.TokenSecret,
 		TenantId:       t.TenantId,
+		Currency:       t.Currency,
+		FileLocale:     t.FileLocale,
 	}
 }

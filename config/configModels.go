@@ -11,6 +11,8 @@ type TradeshiftAPIConfig struct {
 	Token          string
 	TokenSecret    string
 	TenantId       string
+	Currency       string
+	FileLocale     string
 }
 
 type ProductCatalogConfig struct {
@@ -28,4 +30,29 @@ type ProductCatalogConfig struct {
 type OfferCatalogConfig struct {
 	SourcePath string
 	SentPath   string
+}
+
+type OfferItemCatalogConfig struct {
+	SourcePath        string
+	SuccessResultPath string
+	ReportPath        string
+	SentPath          string
+}
+
+type CommonConfig struct {
+	SourcePath string
+	SentPath   string
+	Sheet      *SheetConfig
+}
+
+type SheetConfig struct {
+	Products   string
+	Offers     string
+	Failures   string
+	OfferItems *SheetParamsConfig
+}
+
+type SheetParamsConfig struct {
+	Name            string
+	HeaderRowsCount int
 }

@@ -40,7 +40,7 @@ func NewFileManager(deps Deps) *FileManager {
 	}
 }
 
-func (m *FileManager) GetFileType(filePath string) FileType {
+func GetFileType(filePath string) FileType {
 	ext := strings.TrimLeft(filepath.Ext(filePath), ".")
 	switch ext {
 	case "csv":
@@ -130,7 +130,6 @@ func GetFiles(folder string) []string {
 			file = append(file, name)
 		}
 	}
-
 	return file
 }
 

@@ -1,11 +1,8 @@
 package csvH
 
 import (
-	"bufio"
-	"encoding/csv"
-	"fmt"
-	"log"
-	"os"
+	"ts/file/csvFile"
+	"ts/utils"
 )
 
 const (
@@ -13,64 +10,72 @@ const (
 )
 
 type Adapter struct {
-	Header []string
+	header []string
 }
 
 func (h *Adapter) Alias() string {
 	return alias
 }
 
-func (h *Adapter) Parse(blobPath string) []map[string]interface{} {
-	parsedData := h.Read(blobPath)
-	return parsedData
-}
-
 func (h *Adapter) GetHeader() []string {
-	return h.Header
+	return h.header
 }
 
-func (h *Adapter) Read(filePath string) []map[string]interface{} {
-	// Load a csv file.
-	f, _ := os.Open(filePath)
-	// Create a new reader.
-	r := csv.NewReader(bufio.NewReader(f))
-	result, err := r.ReadAll()
-	if err != nil {
-		log.Fatalf(fmt.Sprintf("The file %v is not valid", filePath))
-	}
-	parsedData := make([]map[string]interface{}, 0, 0)
-	h.Header = result[0]
-
-	for rowCounter, row := range result {
-
-		if rowCounter != 0 {
-			var singleMap = make(map[string]interface{})
-			for colCounter, col := range row {
-				singleMap[h.Header[colCounter]] = col
-			}
-			if len(singleMap) > 0 {
-
-				parsedData = append(parsedData, singleMap)
-			}
-		}
-	}
-	return parsedData
+func (h *Adapter) setHeader(header []string) {
+	h.header = header
 }
 
-func (h *Adapter) Write(filepath string, data [][]string) {
-	f, err := os.Create(filepath)
-
+func (h *Adapter) Read(filePath string) ([][]string, error) {
+	result, err := csvFile.Read(filePath)
 	if err != nil {
-		log.Fatalf("failed create result file: %v", err)
+		return nil, err
 	}
-	w := csv.NewWriter(f)
-	w.Comma = ','
-	defer w.Flush()
+	validResult := getValidRows(result)
+	h.setHeader(validResult[0])
+	return validResult, nil
+}
 
-	for _, item := range data {
-		err := w.Write(item)
-		if err != nil {
-			log.Printf("failed to write to file: %v", err)
+func (h *Adapter) Parse(filePath string) ([]map[string]interface{}, error) {
+	data, err := h.Read(filePath)
+	if err != nil {
+		return nil, err
+	}
+	res, err := utils.RowsToMapRows(data, h.header)
+	return res, err
+}
+
+func (h *Adapter) Write(filepath string, data [][]string) error {
+	err := csvFile.Write(filepath, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func isValidRow(row []string) bool {
+	keys := []string{
+		"HEADER_V3_START",
+		"HEADER_V3_START ",
+	}
+
+	if utils.IsEmptyRow(row) {
+		return false
+	}
+	for _, key := range keys {
+		if ok, _ := utils.InArray(key, row); ok {
+			return false
 		}
 	}
+	return true
+}
+
+func getValidRows(data [][]string) [][]string {
+	var res [][]string
+
+	for _, row := range data {
+		if isValidRow(row) {
+			res = append(res, row)
+		}
+	}
+	return res
 }

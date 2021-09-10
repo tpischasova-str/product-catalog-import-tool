@@ -2,6 +2,7 @@ package reports
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 	"ts/adapters"
 	"ts/productImport/mapping"
@@ -89,8 +90,6 @@ func TestReportsHandler_buildSuccessMapRaw(t *testing.T) {
 		args   args
 		want   [][]string
 	}{
-		// row order is changeable- test are unstable for CI run
-/*
 		{
 			name: "positive: attribute value in report should be replaced with value from fixed data. " +
 				"Report should contain header in TradeShift format" +
@@ -139,7 +138,6 @@ func TestReportsHandler_buildSuccessMapRaw(t *testing.T) {
 				},
 			},
 		},
-/*
 		{
 			name: "positive: attributes from source data and fixed data should be added to report",
 
@@ -292,7 +290,7 @@ func TestReportsHandler_buildSuccessMapRaw(t *testing.T) {
 					"2", "200001", "Product2", "",
 				},
 			},
-		},*/
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -302,8 +300,29 @@ func TestReportsHandler_buildSuccessMapRaw(t *testing.T) {
 				ColumnMapConfig: tt.fields.ColumnMapConfig,
 				productHandler:  tt.fields.ProductHandler,
 			}
-			if got := r.buildSuccessMapRaw(tt.args.source, tt.args.reportItems); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("buildSuccessMapRaw() = %v, want %v", got, tt.want)
+			got := r.buildSuccessMapRaw(tt.args.source, tt.args.reportItems)
+			if !reflect.DeepEqual(len(got), len(tt.want)) {
+				t.Errorf("buildSuccessMapRaw() actual result rows count: %v, expected: %v", len(got), len(tt.want))
+			}
+			gotHeader := got[0]
+			wantHeader := tt.want[0]
+			if !reflect.DeepEqual(gotHeader[0:2], wantHeader[0:2]) {
+				t.Errorf("buildSuccessMapRaw(): actual required columns (ID, Category): %v, expected %v", gotHeader[0:2], wantHeader[0:2])
+			}
+			sort.Strings(gotHeader)
+			sort.Strings(wantHeader)
+			if !reflect.DeepEqual(gotHeader, wantHeader) {
+				t.Errorf("buildSuccessMapRaw() actual column names: %v, expected: %v", gotHeader, wantHeader)
+			}
+
+			for i, row := range tt.want {
+				sort.Strings(row)
+				sort.Strings(got[i])
+				if i > 0 {
+					if !reflect.DeepEqual(got[i], row) {
+						t.Errorf("buildSuccessMapRaw() actual data for row[%v]: %v, expected: %v", i, got[i], row)
+					}
+				}
 			}
 		})
 	}

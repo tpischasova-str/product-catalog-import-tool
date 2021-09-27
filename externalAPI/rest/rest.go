@@ -8,16 +8,17 @@ import (
 	"go.uber.org/dig"
 	"io"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"ts/config"
+	"ts/logger"
 )
 
 type APIClient struct {
+	logger     logger.LoggerInterface
 	BaseURL    string
 	Auth       Auth
 	HTTPClient *http.Client
@@ -38,11 +39,13 @@ type UrlParam struct {
 type Deps struct {
 	dig.In
 	Config *config.Config
+	Logger logger.LoggerInterface
 }
 
 func NewRestClient(deps Deps) RestClientInterface {
 	tsConfig := deps.Config.TradeshiftAPI
 	c := APIClient{
+		logger:     deps.Logger,
 		BaseURL:    tsConfig.APIBaseURL,
 		HTTPClient: &http.Client{},
 		Auth: Auth{
@@ -169,7 +172,7 @@ func (c *APIClient) executeRequest(req *http.Request) (*http.Response, error) {
 	return resp, nil
 }
 
-func ParseResponse(r *http.Response) (map[string]interface{}, error) {
+func (c *APIClient) ParseResponse(r *http.Response) (map[string]interface{}, error) {
 	if r == nil {
 		return nil, fmt.Errorf("http response is empty")
 	}
@@ -182,7 +185,11 @@ func ParseResponse(r *http.Response) (map[string]interface{}, error) {
 	body, err := ioutil.ReadAll(r.Body)
 
 	if err != nil {
-		log.Printf("failed to read response body %v", err)
+		c.logger.Debug("failed to read response body",
+			map[string]interface{}{
+				"error": err,
+				"body":  r.Body,
+			})
 		return nil, err
 	}
 	defer r.Body.Close()

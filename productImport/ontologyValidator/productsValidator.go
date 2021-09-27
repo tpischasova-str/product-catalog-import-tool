@@ -2,7 +2,6 @@ package ontologyValidator
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"ts/productImport/ontologyRead/models"
 	"ts/productImport/ontologyRead/rawOntology"
@@ -11,9 +10,9 @@ import (
 )
 
 func (v *Validator) validateProductsAgainstRules(
-	mapping       map[string]string,
-	rules         *models.OntologyConfig,
-	sourceData    []map[string]interface{},
+	mapping map[string]string,
+	rules *models.OntologyConfig,
+	sourceData []map[string]interface{},
 ) ([]reports.Report, bool) {
 	feed := make([]reports.Report, 0)
 	var columnMapIndex map[string]string
@@ -29,13 +28,13 @@ func (v *Validator) validateProductsAgainstRules(
 		if val, ok := product[currentSourceMap.Category]; ok {
 			category = fmt.Sprintf("%v", val)
 		} else {
-			log.Fatalf("The product category is not specified. Product ID: %v", product[currentSourceMap.ProductID])
+			v.logger.Fatal(fmt.Sprintf("The product category is not specified. Product ID: %v", product[currentSourceMap.ProductID]), nil)
 		}
 
 		if val, ok := product[currentSourceMap.ProductID]; ok {
 			id = fmt.Sprintf("%v", val)
 		} else {
-			log.Fatalf("id is not specified")
+			v.logger.Fatal("id is not specified", nil)
 		}
 		name := ""
 		if prodName, ok := product[currentSourceMap.Name]; ok {

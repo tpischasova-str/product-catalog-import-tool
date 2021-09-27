@@ -2,6 +2,7 @@ package configModels
 
 type RawServiceConfig struct {
 	Port                   uint16                    `yaml:"port"`
+	LogLevel               string                    `yaml:"log_level"`
 	ProductCatalogConfig   RawProductCatalogConfig   `yaml:"product" validate:"required"`
 	OfferCatalogConfig     RawOfferCatalogConfig     `yaml:"offer" validate:"required"`
 	OfferItemCatalogConfig RawOfferItemCatalogConfig `yaml:"offer_item" validate:"required"`
@@ -11,6 +12,7 @@ type RawServiceConfig struct {
 
 func (c *RawServiceConfig) ToConfig() *ServiceConfig {
 	return &ServiceConfig{
-		Port: c.Port,
+		Port:     c.Port,
+		LogLevel: c.LogLevel,
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"ts/config"
 	"ts/externalAPI/rest"
 	"ts/externalAPI/tradeshiftAPI"
+	"ts/logger"
 	"ts/offerImport"
 	"ts/offerImport/importHandler"
 	"ts/offerImport/offerReader"
@@ -35,6 +36,7 @@ var diConfig = []entry{
 	{constructor: config.Get},
 	{constructor: adapters.NewFileManager},
 	{constructor: adapters.NewHandler},
+	{constructor: logger.NewLogger},
 
 	{constructor: mapping.NewMappingHandler},
 	{constructor: ontologyRead.NewRulesHandler},

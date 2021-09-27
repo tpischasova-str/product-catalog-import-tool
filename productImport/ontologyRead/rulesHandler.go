@@ -1,20 +1,23 @@
 package ontologyRead
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"ts/adapters"
+	"ts/logger"
 	"ts/productImport/ontologyRead/models"
 	"ts/productImport/ontologyRead/rawOntology"
 )
 
 type RulesHandler struct {
+	logger     logger.LoggerInterface
 	sourcePath string
 	reader     adapters.HandlerInterface
 }
 
 func NewRulesHandler(deps Deps) *RulesHandler {
 	return &RulesHandler{
+		logger:     deps.Logger,
 		sourcePath: deps.Config.ProductCatalog.OntologyPath,
 		reader:     deps.Handler,
 	}
@@ -29,10 +32,10 @@ func (h *RulesHandler) InitRulesConfig() (*models.OntologyConfig, error) {
 			rules = h.UploadRules(sourcePath)
 			rulesConfig = rules.ToConfig()
 		} else {
-			log.Fatalf("ontology file does not exists. Please fill and add it to %v", sourcePath)
+			h.logger.Fatal(fmt.Sprintf("ontology file does not exists. Please fill and add it to %v", sourcePath), nil)
 		}
 	} else {
-		log.Fatalf("ontology path is not specified")
+		h.logger.Fatal("ontology path is not specified", nil)
 	}
 	return rulesConfig, nil
 }
@@ -45,10 +48,10 @@ func (h *RulesHandler) UploadRules(path string) *rawOntology.RawOntology {
 	actualHeader := h.reader.GetHeader()
 	header, err := processHeader(actualHeader)
 	if err != nil {
-		log.Fatalf("failed to upload rules: %v", err)
+		h.logger.Fatal("failed to upload rules", err)
 	}
-	o := processOntology(parsedRaws, header)
-	log.Printf("Rules upload finished. Proceeded %v lines, uploaded %v categories", len(parsedRaws)+1, o.GetCategoriesCount())
+	o := h.processOntology(parsedRaws, header)
+	h.logger.Info(fmt.Sprintf("Rules upload finished. Proceeded %v lines, uploaded %v categories", len(parsedRaws)+1, o.GetCategoriesCount()))
 	return o
 }
 
@@ -60,7 +63,7 @@ func processHeader(parsedHeader []string) (*rawOntology.RawHeader, error) {
 	return resHeader, nil
 }
 
-func processOntology(parsedRaws []map[string]interface{}, header *rawOntology.RawHeader) *rawOntology.RawOntology {
+func (h *RulesHandler) processOntology(parsedRaws []map[string]interface{}, header *rawOntology.RawHeader) *rawOntology.RawOntology {
 	o := rawOntology.NewRawOntology()
 
 	for i, raw := range parsedRaws {
@@ -72,10 +75,11 @@ func processOntology(parsedRaws []map[string]interface{}, header *rawOntology.Ra
 			rawCategory := rawOntology.NewRawCategory(raw, header)
 			err := o.AddCategoryAttribute(rawCategory, rawAttribute)
 			if err != nil {
-				//log.Printf("raw %v error: %v", i, err)
+				h.logger.Debug(fmt.Sprintf("raw %v error", i),
+					map[string]interface{}{"error": err})
 			}
 		} else {
-			log.Printf("raw %v: validation errors: %v", i, errors)
+			h.logger.Warn(fmt.Sprintf("raw %v: validation errors: %v", i, errors), nil)
 		}
 	}
 	return o

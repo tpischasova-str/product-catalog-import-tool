@@ -1,7 +1,8 @@
 package configModels
 
 type ServiceConfig struct {
-	Port uint16
+	Port     uint16
+	LogLevel string
 }
 
 type ProductCatalogConfig struct {

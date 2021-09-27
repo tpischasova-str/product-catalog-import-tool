@@ -1,3 +1,4 @@
+log_level: "info"
 product:
   source: ./data/source/products/
   sent: ./data/source/processed/products/

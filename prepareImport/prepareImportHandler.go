@@ -3,11 +3,11 @@ package prepareImport
 import (
 	"fmt"
 	"go.uber.org/dig"
-	"log"
 	"path/filepath"
 	"strings"
 	"ts/adapters"
 	"ts/config"
+	"ts/logger"
 )
 
 type Handler struct {
@@ -18,11 +18,13 @@ type Handler struct {
 	attributesConverter *XLSXSheetToCSVConverter
 	offerConverter      *XLSXSheetToCSVConverter
 	offerItemConverter  *XLSXSheetToCSVConverter
+	logger              logger.LoggerInterface
 }
 
 type Deps struct {
 	dig.In
 	Config *config.Config
+	Logger logger.LoggerInterface
 }
 
 func NewPrepareImportHandler(deps Deps) *Handler {
@@ -33,6 +35,7 @@ func NewPrepareImportHandler(deps Deps) *Handler {
 	}
 	sheetsConf := xlsxConfig.Sheets
 	return &Handler{
+		logger:     deps.Logger,
 		sourcePath: xlsxConfig.SourcePath,
 		sentPath:   xlsxConfig.SentPath,
 		productConverter: NewXLSXSheetToCSVConverter(
@@ -69,11 +72,11 @@ func (h *Handler) Run() {
 			fileName)
 		err := h.convertSheetsData(filePath)
 		if err != nil {
-			log.Printf("failed to process file %v: %v", filePath, err)
+			h.logger.Error(fmt.Sprintf("failed to convert file %v", filePath), err)
 		}
 		_, err = adapters.MoveToPath(filePath, h.sentPath)
 		if err != nil {
-			log.Printf("failed to move %v to %v: %v", filePath, h.sentPath, err)
+			h.logger.Error(fmt.Sprintf("failed to move %v to %v", filePath, h.sentPath), err)
 		}
 	}
 }

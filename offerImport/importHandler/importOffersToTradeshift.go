@@ -2,21 +2,23 @@ package importHandler
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"time"
 	"ts/config/configModels"
 	"ts/externalAPI/tradeshiftAPI"
+	"ts/logger"
 	"ts/offerImport/offerReader"
 )
 
 type ImportOfferHandler struct {
+	logger           logger.LoggerInterface
 	transport        *tradeshiftAPI.TradeshiftAPI
 	recipientsConfig *configModels.Recipients
 }
 
 func NewImportOfferHandler(deps Deps) ImportOfferInterface {
 	return &ImportOfferHandler{
+		logger:           deps.Logger,
 		transport:        deps.Transport,
 		recipientsConfig: deps.Config.TradeshiftAPI.Recipients,
 	}
@@ -24,10 +26,10 @@ func NewImportOfferHandler(deps Deps) ImportOfferInterface {
 
 func (i *ImportOfferHandler) ImportOffers(offers []offerReader.RawOffer) {
 
-	log.Printf("Import offers to Tradeshift has been started")
+	i.logger.Info("Import offers to Tradeshift has been started")
 	for _, offer := range offers {
 		if err := validateOffer(offer); err != nil {
-			log.Printf("failed to import offer \"%v\". Reason:  %v", offer, err)
+			i.logger.Error(fmt.Sprintf("Failed to import offer \"%v\".", offer), err)
 			break
 		}
 		_, err := i.importOffer(
@@ -37,7 +39,7 @@ func (i *ImportOfferHandler) ImportOffers(offers []offerReader.RawOffer) {
 			offer.ExpiresAt,
 			offer.Countries)
 		if err != nil {
-			log.Printf("Offer Import occured the error: %v", err)
+			i.logger.Error(fmt.Sprintf("An error occured while importing offer '%v'", offer.Offer), err)
 		}
 	}
 }
@@ -67,7 +69,7 @@ func (i *ImportOfferHandler) importOffer(
 		return Failed, err
 	}
 	if !isFound {
-		log.Printf("Offer '%v' can't be created for unknown buyer '%v'", offerName, recipientID)
+		i.logger.Error(fmt.Sprintf("Offer '%v' can't be created for unknown buyer '%v'", offerName, recipientID), nil)
 		return BuyerNotFound, nil
 	}
 
@@ -87,7 +89,7 @@ func (i *ImportOfferHandler) importOffer(
 		return Failed, err
 	}
 
-	log.Printf("New offer with name %v has been created", offerName)
+	i.logger.Info(fmt.Sprintf("New offer with name %v has been created", offerName))
 	return OfferCreated, nil
 }
 

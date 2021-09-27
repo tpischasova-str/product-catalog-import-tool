@@ -3,16 +3,17 @@ package offerReader
 import (
 	"fmt"
 	"go.uber.org/dig"
-	"log"
 	"strings"
 	"time"
 	"ts/adapters"
+	"ts/logger"
 	"ts/utils"
 )
 
 const DateLayout = "2006-01-02"
 
 type OfferReader struct {
+	logger logger.LoggerInterface
 	reader adapters.HandlerInterface
 }
 
@@ -27,12 +28,14 @@ type RawOffer struct {
 
 type Deps struct {
 	dig.In
+	Logger      logger.LoggerInterface
 	Reader      adapters.HandlerInterface
 	FileManager *adapters.FileManager
 }
 
 func NewOfferReader(deps Deps) *OfferReader {
 	return &OfferReader{
+		logger: deps.Logger,
 		reader: deps.Reader,
 	}
 }
@@ -44,31 +47,34 @@ func (o *OfferReader) UploadOffers(path string) []RawOffer {
 	actualHeader := o.reader.GetHeader()
 	header, err := processHeader(actualHeader)
 	if err != nil {
-		log.Printf("failed to upload offers: %v", err)
+		o.logger.Error("failed to upload offers", err)
 		return nil
 	}
-	or := processOffers(parsedRaws, header)
+	or := o.processOffers(parsedRaws, header)
 	return or
 }
 
-func processOffers(raws []map[string]interface{}, header *RawHeader) []RawOffer {
+func (o *OfferReader) processOffers(raws []map[string]interface{}, header *RawHeader) []RawOffer {
 	res := make([]RawOffer, len(raws))
 	for i, item := range raws {
-		offer := processOffer(header, item)
-		if offer != nil {
-			res[i] = *offer
+		offer, err := o.processOffer(header, item)
+		if err != nil {
+			o.logger.Error(fmt.Sprintf("An error occured while reading offer on line %v", i), err)
+		} else {
+			if offer != nil {
+				res[i] = *offer
+			}
 		}
 	}
 	return res
 }
 
-func processOffer(header *RawHeader, row map[string]interface{}) *RawOffer {
+func (o *OfferReader) processOffer(header *RawHeader, row map[string]interface{}) (*RawOffer, error) {
 	if utils.IsEmptyMap(row) {
-		return nil
+		return nil, nil
 	}
 	if row[header.Offer] == nil || row[header.Receiver] == nil {
-		log.Printf("row does not contain values in required columns (Offer, Receiver). Actual value: %v", row)
-		return nil
+		return nil, fmt.Errorf("row does not contain values in required columns (Offer, Receiver). Actual value: %v", row)
 	}
 
 	offer := RawOffer{
@@ -83,7 +89,7 @@ func processOffer(header *RawHeader, row map[string]interface{}) *RawOffer {
 		if err == nil {
 			offer.ValidFrom = date
 		} else {
-			log.Printf("invalid format of \"valid_from\" field: should be YYYY-MM-DD: %v", err)
+			o.logger.Warn(fmt.Sprintf("invalid format of \"valid_from\" field: should be YYYY-MM-DD"), err)
 		}
 	}
 	if header.ExpiresAt != "" && row[header.ExpiresAt] != "" {
@@ -91,13 +97,13 @@ func processOffer(header *RawHeader, row map[string]interface{}) *RawOffer {
 		if err == nil {
 			offer.ExpiresAt = date
 		} else {
-			log.Printf("invalid format of \"expies_at\" field: should be YYYY-MM-DD: %v", err)
+			o.logger.Warn("invalid format of \"expires_at\" field: should be YYYY-MM-DD: %v", err)
 		}
 	}
 	if header.Countries != "" && row[header.Countries] != "" {
 		offer.Countries = getCountries(row[header.Countries])
 	}
-	return &offer
+	return &offer, nil
 }
 
 func getCountries(input interface{}) []string {

@@ -2,7 +2,6 @@ package tradeshiftAPI
 
 import (
 	"fmt"
-	"ts/externalAPI/rest"
 )
 
 func (t *TradeshiftAPI) GetBuyer(buyerID string) (map[string]interface{}, error) {
@@ -13,6 +12,6 @@ func (t *TradeshiftAPI) GetBuyer(buyerID string) (map[string]interface{}, error)
 	if err != nil {
 		return nil, err
 	}
-	r, err := rest.ParseResponse(resp)
+	r, err := t.Client.ParseResponse(resp)
 	return r, err
 }

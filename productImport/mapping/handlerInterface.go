@@ -3,8 +3,8 @@ package mapping
 import (
 	"go.uber.org/dig"
 	"ts/config"
+	"ts/logger"
 )
-
 
 type MappingHandlerInterface interface {
 	init(mappingConfigPath string) map[string]string
@@ -15,4 +15,5 @@ type MappingHandlerInterface interface {
 type Deps struct {
 	dig.In
 	Config *config.Config
+	Logger logger.LoggerInterface
 }

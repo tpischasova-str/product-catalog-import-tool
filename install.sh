@@ -2,6 +2,7 @@
 function create_config {
   DIR=$1
   cat >./service.yaml <<EOF
+log_level: "info"
 product:
   source: ${DIR}/data/source/products/
   report: ${DIR}/data/result/report/

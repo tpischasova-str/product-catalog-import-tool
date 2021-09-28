@@ -2,7 +2,6 @@ package importHandler
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"sort"
 	"time"
@@ -55,11 +54,11 @@ func (i *ImportOfferHandler) updateOffer(
 	if offer.ValidFrom.Unix() == newStartDate.Unix() &&
 		offer.ExpiresAt.Unix() == newEndDate.Unix() &&
 		reflect.DeepEqual(offer.Countries, newCountries) {
-		log.Printf("Offer '%v' exists already with the same data and we skip it", offer.Name)
+		i.logger.Warn(fmt.Sprintf("Offer '%v' exists already with the same data and we skip it", offer.Name), nil)
 	} else {
 		err := i.transport.UpdateOffer(offer.ID, offer.Name, &newStartDate, &newEndDate, newCountries)
 
-		log.Printf("Offer '%v' exists already but it has changes and has been updated", offer.Name)
+		i.logger.Warn(fmt.Sprintf("Offer '%v' exists already but it has changes and has been updated", offer.Name), nil)
 		if err != nil {
 			return fmt.Errorf("offer %v was not updated: %v", offer.ID, err)
 		}

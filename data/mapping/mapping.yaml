@@ -1,4 +1,4 @@
-# Column mapping is applied to the source file to identify ID and Category Columns
+# Column mapping is applied to the source file to identify TradeShift Column names for products and prices
 # As well applied to the final product of the script (final product feed)
 # The key represents the name of TS column
 # The value reflects the source file column name:

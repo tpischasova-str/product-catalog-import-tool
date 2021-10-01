@@ -7,9 +7,9 @@ import (
 )
 
 type MappingHandlerInterface interface {
-	init(mappingConfigPath string) map[string]string
 	Get() map[string]string
 	GetColumnMapConfig() *ColumnMapConfig
+	GetUoMMapConfig() *UoMMapConfig
 }
 
 type Deps struct {

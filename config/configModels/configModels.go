@@ -9,6 +9,7 @@ type ProductCatalogConfig struct {
 	SourcePath        string
 	ReportPath        string
 	MappingPath       string
+	UoMMappingPath    string
 	OntologyPath      string
 	SentPath          string
 	InProgressPath    string

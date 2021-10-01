@@ -12,7 +12,7 @@ type ColumnMapConfig struct {
 	Category     string
 	ProductID    string
 	Name         string
-	OtherColumns []*ColumnItem //todo name
+	OtherColumns []*ColumnItem
 }
 
 type ColumnItem struct {
@@ -42,7 +42,6 @@ func (m *mapping) NewColumnMap(rawMap map[string]string) *ColumnMapConfig {
 	}
 
 	parsedMap.OtherColumns = parseNotRequiredColumns(rawMap)
-
 	return &parsedMap
 }
 

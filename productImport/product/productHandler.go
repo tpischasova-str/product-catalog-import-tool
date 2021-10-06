@@ -20,6 +20,7 @@ func NewProductHandler(deps Deps) ProductHandlerInterface {
 			ProductID: m.ProductID,
 			Category:  m.Category,
 			Name:      m.Name,
+			UOM:       m.UOM,
 		},
 	}
 }

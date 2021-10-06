@@ -9,6 +9,7 @@ type ProductColumnMap struct {
 	ProductID string
 	Category  string
 	Name      string
+	UOM       string
 }
 
 func (p *ProductHandler) GetCurrentHeader(row map[string]interface{}) *ProductColumnMap {
@@ -24,6 +25,8 @@ func (p *ProductHandler) GetCurrentHeader(row map[string]interface{}) *ProductCo
 			res.ProductID = key
 		case utils.TrimAll(columnMap.Name):
 			res.Name = key
+		case utils.TrimAll(columnMap.UOM):
+			res.UOM = key
 		}
 	}
 	return &res

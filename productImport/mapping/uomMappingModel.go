@@ -10,7 +10,7 @@ type UoMItem struct {
 }
 
 type UoMMapConfig struct {
-	items map[string]*UoMItem
+	Items map[string]*UoMItem
 }
 
 func NewUoMMapConfig(items []*UoMItem) *UoMMapConfig {
@@ -19,19 +19,19 @@ func NewUoMMapConfig(items []*UoMItem) *UoMMapConfig {
 		res[utils.TrimAll(item.MappedKey)] = item
 	}
 	return &UoMMapConfig{
-		items: res,
+		Items: res,
 	}
 }
 
 func (u *UoMMapConfig) GetDefaultUoMValueByMapped(value string) string {
-	if res, ok := u.items[utils.TrimAll(value)]; ok {
+	if res, ok := u.Items[utils.TrimAll(value)]; ok {
 		return res.DefaultKey
 	}
 	return ""
 }
 
 func (u *UoMMapConfig) GetActualUoMValueByDefault(defaultValue string) string {
-	for _, u := range u.items {
+	for _, u := range u.Items {
 		if utils.TrimAll(defaultValue) == utils.TrimAll(u.DefaultKey) {
 			return u.MappedKey
 		}

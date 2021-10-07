@@ -59,11 +59,19 @@ func (r *ReportsHandler) buildAttributesRaw(item Report) []string {
 		item.CategoryName,
 		item.AttrName,
 		item.AttrValue,
-		item.UoM,
+		r.getUoMActualMappedValue(item.UoM),
 		strings.Join(item.Errors, " "),
 		item.Description,
 		item.DataType,
 		item.IsMandatory,
 		item.CodedVal,
 	}
+}
+
+func (r *ReportsHandler) getUoMActualMappedValue(value string) string {
+	actualKey := r.UoMMapConfig.GetActualUoMValueByDefault(value)
+	if actualKey == "" {
+		return value
+	}
+	return actualKey
 }

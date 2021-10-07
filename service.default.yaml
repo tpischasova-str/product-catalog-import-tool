@@ -6,6 +6,7 @@ product:
   report: ./data/result/report/
   success_result: ./data/result/sent/
   mapping: ./data/mapping/mapping.yaml
+  uom_mapping: ./data/mapping/uom_mapping.yaml
   ontology: ./data/ontology/rules.csv
 
 offer:

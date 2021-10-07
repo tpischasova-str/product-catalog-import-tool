@@ -86,7 +86,7 @@ func (v *Validator) validateAttributesAgainstRules(
 							CategoryName: ruleCategory.Name,
 							AttrName:     attr.Name,
 							AttrValue:    reportAttribute.AttrValue,
-							UoM:          attr.MeasurementUoM,
+							UoM:          reportAttribute.UoM,
 							Errors:       message,
 							DataType:     fmt.Sprintf("%v", attr.DataType),
 							Description:  reportAttribute.Description,

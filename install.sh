@@ -10,6 +10,7 @@ product:
   in_progress: ${DIR}/data/source/inprogress/
   success_result: ${DIR}/data/result/sent/
   mapping: ${DIR}/data/mapping/mapping.yaml
+  uom_mapping: ./data/mapping/uom_mapping.yaml
   ontology: ${DIR}/data/ontology/rules.csv
 
 offer:

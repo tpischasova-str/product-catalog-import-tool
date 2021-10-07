@@ -50,7 +50,7 @@ func TestUoMMapConfig_GetActualUoMValueByDefault(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &UoMMapConfig{
-				items: tt.fields.items,
+				Items: tt.fields.items,
 			}
 			if got := u.GetActualUoMValueByDefault(tt.args.defaultValue); got != tt.want {
 				t.Errorf("GetActualUoMValueByDefault() = %v, want %v", got, tt.want)
@@ -106,7 +106,7 @@ func TestUoMMapConfig_GetDefaultUoMValueByMapped(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &UoMMapConfig{
-				items: tt.fields.items,
+				Items: tt.fields.items,
 			}
 			if got := u.GetDefaultUoMValueByMapped(tt.args.value); got != tt.want {
 				t.Errorf("GetDefaultUoMValueByMapped() = %v, want %v", got, tt.want)

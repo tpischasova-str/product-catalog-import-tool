@@ -7,3 +7,4 @@ column-mappings:
   ID: ID
   Category: Category
   Name: Name
+  UOM: UOM

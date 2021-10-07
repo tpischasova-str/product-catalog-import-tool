@@ -6,12 +6,14 @@ const (
 	categoryKey  = "Category" // TS min required column
 	productIdKey = "ID"       // TS min required
 	nameKey      = "Name"
+	UOMKey       = "UOM"
 )
 
 type ColumnMapConfig struct {
 	Category     string
 	ProductID    string
 	Name         string
+	UOM          string
 	OtherColumns []*ColumnItem
 }
 
@@ -41,6 +43,12 @@ func (m *mapping) NewColumnMap(rawMap map[string]string) *ColumnMapConfig {
 		parsedMap.Name = nameKey
 	}
 
+	if rawMap[UOMKey] != "" {
+		parsedMap.UOM = rawMap[UOMKey]
+	} else {
+		parsedMap.UOM = UOMKey
+	}
+
 	parsedMap.OtherColumns = parseNotRequiredColumns(rawMap)
 	return &parsedMap
 }
@@ -48,7 +56,7 @@ func (m *mapping) NewColumnMap(rawMap map[string]string) *ColumnMapConfig {
 func parseNotRequiredColumns(rawMap map[string]string) []*ColumnItem {
 	otherColumns := make([]*ColumnItem, 0)
 	for key, value := range rawMap {
-		if key != nameKey && key != productIdKey && key != categoryKey {
+		if key != nameKey && key != productIdKey && key != categoryKey && key != UOMKey {
 			otherColumns = append(
 				otherColumns,
 				&ColumnItem{
@@ -78,6 +86,13 @@ func (c *ColumnMapConfig) GetDefaultValueByMapped(mappedValue string) *ColumnIte
 		return &ColumnItem{
 			DefaultKey: nameKey,
 			MappedKey:  c.Name,
+		}
+	}
+
+	if utils.TrimAll(c.UOM) == utils.TrimAll(mappedValue) {
+		return &ColumnItem{
+			DefaultKey: UOMKey,
+			MappedKey:  c.UOM,
 		}
 	}
 

@@ -89,6 +89,14 @@ func (v *Validator) validateProductsAgainstRules(
 								fmt.Sprintf("%v", attr.MaxCharacterLength))
 							isError = true
 						}
+						// units of measurement (UOM)
+						attrUOM, ok := prodToMapped[v.buildUomColumn(attr.Name)]
+						if ok {
+							if isValid, errorMessage := v.isValidAttributeUoM(attrUOM, attr); !isValid {
+								message = append(message, errorMessage)
+								isError = true
+							}
+						}
 
 						if len(message) == 0 {
 							message = append(message, "It is ok!")
@@ -112,7 +120,7 @@ func (v *Validator) validateProductsAgainstRules(
 						CategoryName: ruleCategory.Name,
 						AttrName:     attr.Name,
 						AttrValue:    val,
-						UoM:          attr.MeasurementUoM,
+						UoM:          prodToMapped[v.buildUomColumn(attr.Name)],
 						Errors:       message,
 						DataType:     fmt.Sprintf("%v", attr.DataType),
 						Description:  attr.Definition,
@@ -132,4 +140,8 @@ func (v *Validator) validateProductsAgainstRules(
 		}
 	}
 	return feed, isError
+}
+
+func (v Validator) buildUomColumn(attrName string) string {
+	return fmt.Sprintf("%s_%s", attrName, v.ColumnMap.UOM)
 }

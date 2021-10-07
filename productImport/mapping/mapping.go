@@ -54,11 +54,13 @@ func (m *mapping) readColumnMapping(mappingConfigPath string) {
 }
 
 func (m *mapping) initUoMapping() {
+	res := make([]*UoMItem, 0)
 	if m.uomMappingPath != "" {
 		if _, err := os.Stat(m.uomMappingPath); !os.IsNotExist(err) {
-			m.uomMap = NewUoMMapConfig(m.readUoMMapping(m.uomMappingPath))
+			res = m.readUoMMapping(m.uomMappingPath)
 		}
 	}
+	m.uomMap = NewUoMMapConfig(res)
 }
 
 func (m *mapping) readUoMMapping(uomPath string) []*UoMItem {

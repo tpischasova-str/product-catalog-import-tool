@@ -64,7 +64,6 @@ func initFailedAttributesReportHeader(m *mapping.ColumnMapConfig) *ReportLabels 
 		CategoryName: "Category Name",
 		AttrName:     "Attribute Name*",
 		AttrValue:    "Attribute Value*",
-		UoM:          "UOM",
 		Errors:       "Error Message",
 		Description:  "Description",
 		DataType:     "Data Type",
@@ -86,6 +85,11 @@ func initFailedAttributesReportHeader(m *mapping.ColumnMapConfig) *ReportLabels 
 		labels.Name = m.Name
 	} else {
 		labels.Name = "Name"
+	}
+	if m.UOM != "" {
+		labels.UoM = m.UOM
+	} else {
+		labels.UoM = "UOM"
 	}
 
 	return &labels

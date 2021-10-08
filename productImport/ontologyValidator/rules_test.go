@@ -44,30 +44,6 @@ func TestValidator_isValidAttributeUoM(t *testing.T) {
 			want1: "",
 		},
 		{
-			name: "Mapped UOM considered as valid if it's default key is equal to UOM from rules",
-			fields: fields{
-				ColumnMap: &ColumnMap{
-					UOM: "UOM",
-				},
-				uomMappingConfig: &mapping.UoMMapConfig{
-					Items: map[string]*mapping.UoMItem{
-						"kilo": {
-							DefaultKey: "KG",
-							MappedKey:  "KILO",
-						},
-					},
-				},
-			},
-			args: args{
-				actualUom: "Kilo",
-				attributeRule: &models.AttributeConfig{
-					MeasurementUoM: "Kg",
-				},
-			},
-			want:  true,
-			want1: "",
-		},
-		{
 			name: "Empty UOM considered as valid if UoM in rules was not defined",
 			fields: fields{
 				ColumnMap: &ColumnMap{

@@ -10,14 +10,7 @@ func (v *Validator) isValidAttributeUoM(actualUom string, attributeRule *models.
 	if attributeRule.MeasurementUoM == "" {
 		return true, ""
 	}
-	defaultActualKey := v.uomMappingConfig.GetDefaultUoMValueByMapped(actualUom)
-	var uom string
-	if defaultActualKey == "" {
-		uom = actualUom
-	} else {
-		uom = defaultActualKey
-	}
-	if utils.TrimAll(uom) != utils.TrimAll(attributeRule.MeasurementUoM) {
+	if utils.TrimAll(actualUom) != utils.TrimAll(attributeRule.MeasurementUoM) {
 		return false, fmt.Sprintf("The attribute's UOM value should be '%v'", attributeRule.MeasurementUoM)
 	}
 	return true, ""

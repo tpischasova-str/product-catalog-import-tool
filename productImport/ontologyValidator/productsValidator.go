@@ -90,7 +90,7 @@ func (v *Validator) validateProductsAgainstRules(
 							isError = true
 						}
 						// units of measurement (UOM)
-						attrUOM, ok := prodToMapped[v.buildUomColumn(attr.Name)]
+						attrUOM, ok := prodToMapped[v.buildUomColumn(mapping, attr.Name)]
 						if ok {
 							if isValid, errorMessage := v.isValidAttributeUoM(attrUOM, attr); !isValid {
 								message = append(message, errorMessage)
@@ -120,7 +120,7 @@ func (v *Validator) validateProductsAgainstRules(
 						CategoryName: ruleCategory.Name,
 						AttrName:     attr.Name,
 						AttrValue:    val,
-						UoM:          prodToMapped[v.buildUomColumn(attr.Name)],
+						UoM:          prodToMapped[v.buildUomColumn(mapping, attr.Name)],
 						Errors:       message,
 						DataType:     fmt.Sprintf("%v", attr.DataType),
 						Description:  attr.Definition,
@@ -142,6 +142,16 @@ func (v *Validator) validateProductsAgainstRules(
 	return feed, isError
 }
 
-func (v Validator) buildUomColumn(attrName string) string {
-	return fmt.Sprintf("%s_%s", attrName, v.ColumnMap.UOM)
+func (v Validator) buildUomColumn(mapping map[string]string, attrName string) string {
+	attrName = strings.Replace(attrName, "  ", " ", -1)
+	attrName = strings.TrimLeft(attrName, " ")
+	attrName = strings.TrimRight(attrName, " ")
+
+	var columnName string
+	if value, ok := mapping[attrName]; ok {
+		columnName = value
+	} else {
+		columnName = attrName
+	}
+	return fmt.Sprintf("%s_UOM", columnName)
 }

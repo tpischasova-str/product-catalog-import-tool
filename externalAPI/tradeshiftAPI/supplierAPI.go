@@ -16,7 +16,7 @@ func (t *TradeshiftAPI) GetIdentifier() (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	r, err := rest.ParseResponse(resp)
+	r, err := t.Client.ParseResponse(resp)
 	return r, err
 }
 
@@ -34,7 +34,7 @@ func (t *TradeshiftAPI) UploadFile(filePath string) (map[string]interface{}, err
 	method := "/product-engine/supplier/supplier/v1/files"
 
 	resp, err := t.Client.PostFile(method, filePath)
-	r, err := rest.ParseResponse(resp)
+	r, err := t.Client.ParseResponse(resp)
 	return r, err
 }
 
@@ -72,7 +72,7 @@ func (t *TradeshiftAPI) RunImportAction(fileID string, currency string, fileLoca
 func (t *TradeshiftAPI) GetActionResult(actionID string) (map[string]interface{}, error) {
 	method := fmt.Sprintf("/product-engine/supplier/supplier/v1/actions/%v", url.QueryEscape(actionID))
 	resp, err := t.Client.Get(method, nil)
-	r, err := rest.ParseResponse(resp)
+	r, err := t.Client.ParseResponse(resp)
 	return r, err
 }
 
@@ -102,7 +102,7 @@ func (t *TradeshiftAPI) SearchOffer(name string) (map[string]interface{}, error)
 		},
 	}
 	resp, err := t.Client.Get(method, params)
-	r, err := rest.ParseResponse(resp)
+	r, err := t.Client.ParseResponse(resp)
 	return r, err
 }
 

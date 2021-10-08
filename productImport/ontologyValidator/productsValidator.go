@@ -2,7 +2,6 @@ package ontologyValidator
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"ts/productImport/ontologyRead/models"
 	"ts/productImport/ontologyRead/rawOntology"
@@ -11,9 +10,9 @@ import (
 )
 
 func (v *Validator) validateProductsAgainstRules(
-	mapping       map[string]string,
-	rules         *models.OntologyConfig,
-	sourceData    []map[string]interface{},
+	mapping map[string]string,
+	rules *models.OntologyConfig,
+	sourceData []map[string]interface{},
 ) ([]reports.Report, bool) {
 	feed := make([]reports.Report, 0)
 	var columnMapIndex map[string]string
@@ -29,13 +28,13 @@ func (v *Validator) validateProductsAgainstRules(
 		if val, ok := product[currentSourceMap.Category]; ok {
 			category = fmt.Sprintf("%v", val)
 		} else {
-			log.Fatalf("The product category is not specified. Product ID: %v", product[currentSourceMap.ProductID])
+			v.logger.Fatal(fmt.Sprintf("The product category is not specified. Product ID: %v", product[currentSourceMap.ProductID]), nil)
 		}
 
 		if val, ok := product[currentSourceMap.ProductID]; ok {
 			id = fmt.Sprintf("%v", val)
 		} else {
-			log.Fatalf("id is not specified")
+			v.logger.Fatal("id is not specified", nil)
 		}
 		name := ""
 		if prodName, ok := product[currentSourceMap.Name]; ok {
@@ -90,6 +89,14 @@ func (v *Validator) validateProductsAgainstRules(
 								fmt.Sprintf("%v", attr.MaxCharacterLength))
 							isError = true
 						}
+						// units of measurement (UOM)
+						attrUOM, ok := prodToMapped[v.buildUomColumn(mapping, attr.Name)]
+						if ok {
+							if isValid, errorMessage := v.isValidAttributeUoM(attrUOM, attr); !isValid {
+								message = append(message, errorMessage)
+								isError = true
+							}
+						}
 
 						if len(message) == 0 {
 							message = append(message, "It is ok!")
@@ -113,7 +120,7 @@ func (v *Validator) validateProductsAgainstRules(
 						CategoryName: ruleCategory.Name,
 						AttrName:     attr.Name,
 						AttrValue:    val,
-						UoM:          attr.MeasurementUoM,
+						UoM:          prodToMapped[v.buildUomColumn(mapping, attr.Name)],
 						Errors:       message,
 						DataType:     fmt.Sprintf("%v", attr.DataType),
 						Description:  attr.Definition,
@@ -133,4 +140,18 @@ func (v *Validator) validateProductsAgainstRules(
 		}
 	}
 	return feed, isError
+}
+
+func (v Validator) buildUomColumn(mapping map[string]string, attrName string) string {
+	attrName = strings.Replace(attrName, "  ", " ", -1)
+	attrName = strings.TrimLeft(attrName, " ")
+	attrName = strings.TrimRight(attrName, " ")
+
+	var columnName string
+	if value, ok := mapping[attrName]; ok {
+		columnName = value
+	} else {
+		columnName = attrName
+	}
+	return fmt.Sprintf("%s_UOM", columnName)
 }

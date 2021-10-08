@@ -3,16 +3,17 @@ package tradeshiftImportHandler
 import (
 	"fmt"
 	"go.uber.org/dig"
-	"log"
 	"path/filepath"
 	"ts/adapters"
 	"ts/config"
 	"ts/externalAPI/tradeshiftAPI"
+	"ts/logger"
 	"ts/outwardImport"
 	"ts/outwardImport/importToTradeshift"
 )
 
 type TradeshiftHandler struct {
+	logger               logger.LoggerInterface
 	transport            *tradeshiftAPI.TradeshiftAPI
 	filemanager          *adapters.FileManager
 	handler              adapters.HandlerInterface
@@ -20,10 +21,10 @@ type TradeshiftHandler struct {
 	reportPath           string
 }
 
-
 type DepsH struct {
 	dig.In
 	Config               *config.Config
+	Logger               logger.LoggerInterface
 	TradeshiftAPI        *tradeshiftAPI.TradeshiftAPI
 	FileManager          *adapters.FileManager
 	FilesHandler         adapters.HandlerInterface
@@ -35,6 +36,7 @@ func NewTradeshiftHandler(deps DepsH) *TradeshiftHandler {
 	h.Init(adapters.TXT)
 
 	return &TradeshiftHandler{
+		logger:               deps.Logger,
 		transport:            deps.TradeshiftAPI,
 		filemanager:          deps.FileManager,
 		handler:              h,
@@ -67,11 +69,11 @@ func (th *TradeshiftHandler) ImportFeedToTradeshift(
 	}
 	switch state {
 	case importToTradeshift.CompleteImportState:
-		log.Println("Product import has been finished successfully")
+		th.logger.Info("Product import has been finished successfully")
 	case importToTradeshift.CompleteWithErrorImportState:
-		log.Printf("Product import has been finished with errors. See report here '%v'", th.filemanager.ReportPath)
+		th.logger.Warn(fmt.Sprintf("Product import has been finished with errors. See report here '%v'", th.filemanager.ReportPath), nil)
 	default:
-		log.Printf("Product import has been failed. See report here '%v'", th.filemanager.ReportPath)
+		th.logger.Warn(fmt.Sprintf("Product import has been failed. See report here '%v'", th.filemanager.ReportPath), nil)
 	}
 	return nil
 }

@@ -2,7 +2,6 @@ package adapters
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -71,28 +70,6 @@ func GetFileName(path string) string {
 func MoveFile(oldLocation string, newLocation string) error {
 	err := os.Rename(oldLocation, newLocation)
 	return err
-}
-
-func CopyFile(oldLocation string, newLocation string) error {
-	sourceFile, err := os.Open(oldLocation)
-	if err != nil {
-		return err
-	}
-	defer sourceFile.Close()
-
-	// Create new file
-	newFile, err := os.Create(newLocation)
-	if err != nil {
-		return err
-	}
-	defer newFile.Close()
-
-	bytesCopied, err := io.Copy(newFile, sourceFile)
-	if err != nil {
-		return err
-	}
-	log.Printf("Copied %d bytes.", bytesCopied)
-	return nil
 }
 
 func GetFiles(folder string) []string {

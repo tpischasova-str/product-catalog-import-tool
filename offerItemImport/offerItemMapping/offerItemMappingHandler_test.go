@@ -6,14 +6,14 @@ import (
 	"ts/productImport/mapping"
 )
 
-func TestOfferItemReader_buildHeader(t *testing.T) {
+func TestOfferItemMappingHandler_buildHeader(t *testing.T) {
 	type fields struct {
 		columnMap         *mapping.ColumnMapConfig
 		sourcePath        string
 		successReportPath string
 	}
 	type args struct {
-		row []string
+		headerRow []string
 	}
 	tests := []struct {
 		name   string
@@ -22,25 +22,63 @@ func TestOfferItemReader_buildHeader(t *testing.T) {
 		want   []string
 	}{
 		{
-			name: "positive",
+			name: "positive: mapped columnn names should be converted to default values.",
 			fields: fields{
 				columnMap: &mapping.ColumnMapConfig{
-					ProductID: "Product ID",
+					ProductID: "SKU",
+					Category:  "UNSPSC",
+					OtherColumns: []*mapping.ColumnItem{
+						{
+							DefaultKey: "DefaultKey1",
+							MappedKey:  "MappedKey1",
+						},
+						{
+							DefaultKey: "DefaultKey2",
+							MappedKey:  "MappedKey2",
+						},
+					},
 				},
 			},
 			args: args{
-				row: []string{
-					"Name",
-					"Offer",
-					"productID *",
-					"Price",
+				headerRow: []string{
+					"Sku",
+					"UNSPSC",
+					"DefaultKey2",
 				},
 			},
 			want: []string{
-				"Name",
-				"Offer",
 				"ID",
-				"Price",
+				"Category",
+				"DefaultKey2",
+			},
+		},
+		{
+			name: "positive: if column name is not mapped, should be taken original column name",
+			fields: fields{
+				columnMap: &mapping.ColumnMapConfig{
+					ProductID: "SKU",
+					Category:  "UNSPSC",
+					OtherColumns: []*mapping.ColumnItem{
+						{
+							DefaultKey: "DefaultKey1",
+							MappedKey:  "MappedKey1",
+						},
+					},
+				},
+			},
+			args: args{
+				headerRow: []string{
+					"Sku",
+					"UNSPSC",
+					"DefaultKey1",
+					"Not Mapped Key",
+				},
+			},
+			want: []string{
+				"ID",
+				"Category",
+				"DefaultKey1",
+				"Not Mapped Key",
 			},
 		},
 	}
@@ -51,8 +89,8 @@ func TestOfferItemReader_buildHeader(t *testing.T) {
 				sourcePath:        tt.fields.sourcePath,
 				successReportPath: tt.fields.successReportPath,
 			}
-			if got := oi.buildHeader(tt.args.row); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("buildHeader() = %v, want %v", got, tt.want)
+			if got := oi.buildHeader(tt.args.headerRow); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("buildMappedHeader() = %v, want %v", got, tt.want)
 			}
 		})
 	}

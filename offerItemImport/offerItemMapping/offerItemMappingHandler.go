@@ -6,7 +6,6 @@ import (
 	"ts/adapters"
 	"ts/file/csvFile"
 	"ts/productImport/mapping"
-	"ts/utils"
 )
 
 type OfferItemMappingHandler struct {
@@ -50,14 +49,15 @@ func (oi *OfferItemMappingHandler) applyMapping(fileName string) error {
 	return nil
 }
 
-func (oi *OfferItemMappingHandler) buildHeader(row []string) []string {
-	res := make([]string, len(row))
-	for i, value := range row {
-		if utils.TrimAll(value) == utils.TrimAll(oi.columnMap.ProductID) {
-			res[i] = "ID"
-			continue
+func (oi *OfferItemMappingHandler) buildHeader(headerRow []string) []string {
+	res := make([]string, len(headerRow))
+	for i, value := range headerRow {
+		mapped := oi.columnMap.GetDefaultValueByMapped(value)
+		if mapped == nil {
+			res[i] = value
+		} else {
+			res[i] = mapped.DefaultKey
 		}
-		res[i] = value
 	}
 	return res
 }

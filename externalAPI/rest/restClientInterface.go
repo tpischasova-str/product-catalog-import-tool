@@ -10,4 +10,5 @@ type RestClientInterface interface {
 	PostFile(method string, filePath string) (*http.Response, error)
 	Put(method string, body io.Reader, params []UrlParam) (*http.Response, error)
 	Get(method string, params []UrlParam) (*http.Response, error)
+	ParseResponse(r *http.Response) (map[string]interface{}, error)
 }

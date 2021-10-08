@@ -2,6 +2,7 @@ package ontologyValidator
 
 import (
 	"go.uber.org/dig"
+	"ts/logger"
 	"ts/productImport/attribute"
 	"ts/productImport/mapping"
 	"ts/productImport/ontologyRead/models"
@@ -11,6 +12,7 @@ import (
 
 type Deps struct {
 	dig.In
+	Logger         logger.LoggerInterface
 	ProductHandler product.ProductHandlerInterface
 	Mapper         mapping.MappingHandlerInterface
 }

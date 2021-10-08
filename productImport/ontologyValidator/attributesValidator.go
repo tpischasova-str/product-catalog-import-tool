@@ -41,6 +41,7 @@ func (v *Validator) validateAttributesAgainstRules(
 					if reportAttribute.AttrName == "" || (reportAttribute.AttrName != "" && reportAttribute.AttrName == attr.Name) {
 						if reportAttribute.AttrValue != "" {
 							//attrVal check type
+							// data type
 							if attr.DataType == rawOntology.FloatType || attr.DataType == rawOntology.NumberType {
 								_, err := utils.GetFloat(reportAttribute.AttrValue)
 								if err != nil {
@@ -59,12 +60,19 @@ func (v *Validator) validateAttributesAgainstRules(
 								}
 							}
 
+							//maxLength
 							if attr.MaxCharacterLength > 0 && len(reportAttribute.AttrValue) > attr.MaxCharacterLength {
 								message = append(
 									message,
 									"The attribute has a too long value (length: %v, max length: %v ).",
 									fmt.Sprintf("%v", len(reportAttribute.AttrValue)),
 									fmt.Sprintf("%v", attr.MaxCharacterLength))
+								isError = true
+							}
+
+							// units of measurement (UOM)
+							if isValid, errorMessage := v.isValidAttributeUoM(reportAttribute.UoM, attr); !isValid {
+								message = append(message, errorMessage)
 								isError = true
 							}
 
@@ -86,7 +94,7 @@ func (v *Validator) validateAttributesAgainstRules(
 							CategoryName: ruleCategory.Name,
 							AttrName:     attr.Name,
 							AttrValue:    reportAttribute.AttrValue,
-							UoM:          attr.MeasurementUoM,
+							UoM:          reportAttribute.UoM,
 							Errors:       message,
 							DataType:     fmt.Sprintf("%v", attr.DataType),
 							Description:  reportAttribute.Description,

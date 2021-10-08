@@ -1,32 +1,40 @@
 package ontologyValidator
 
 import (
+	"ts/logger"
 	"ts/productImport/attribute"
+	"ts/productImport/mapping"
 	"ts/productImport/ontologyRead/models"
 	"ts/productImport/product"
 	"ts/productImport/reports"
 )
 
 type Validator struct {
-	productHandler product.ProductHandlerInterface
-	ColumnMap      *ColumnMap
+	logger           logger.LoggerInterface
+	productHandler   product.ProductHandlerInterface
+	ColumnMap        *ColumnMap
+	uomMappingConfig *mapping.UoMMapConfig
 }
 
 type ColumnMap struct {
 	Category  string
 	ProductID string
 	Name      string
+	UOM       string
 }
 
 func NewValidator(deps Deps) ValidatorInterface {
 	m := deps.Mapper.GetColumnMapConfig()
 	return &Validator{
+		logger:         deps.Logger,
 		productHandler: deps.ProductHandler,
 		ColumnMap: &ColumnMap{
 			Category:  m.Category,
 			ProductID: m.ProductID,
 			Name:      m.Name,
+			UOM:       m.UOM,
 		},
+		uomMappingConfig: deps.Mapper.GetUoMMapConfig(),
 	}
 }
 

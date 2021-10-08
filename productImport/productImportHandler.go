@@ -3,11 +3,12 @@ package productImport
 import (
 	"fmt"
 	"go.uber.org/dig"
-	"log"
+	//	"log"
 	"os"
 	"regexp"
 	"ts/adapters"
 	"ts/config"
+	"ts/logger"
 	"ts/productImport/attribute"
 	"ts/productImport/mapping"
 	"ts/productImport/ontologyRead"
@@ -23,6 +24,7 @@ const stageName = "Product Validation Import stage"
 
 type ProductImportHandler struct {
 	config           *config.Config
+	logger           logger.LoggerInterface
 	mapHandler       mapping.MappingHandlerInterface
 	rulesHandler     *ontologyRead.RulesHandler
 	productHandler   product.ProductHandlerInterface
@@ -44,6 +46,7 @@ type ColumnMap struct {
 type Deps struct {
 	dig.In
 	Config           *config.Config
+	Logger           logger.LoggerInterface
 	MapHandler       mapping.MappingHandlerInterface
 	RulesHandler     *ontologyRead.RulesHandler
 	ProductHandler   product.ProductHandlerInterface
@@ -59,6 +62,7 @@ func NewProductImportHandler(deps Deps) *ProductImportHandler {
 	m := deps.MapHandler.GetColumnMapConfig()
 	return &ProductImportHandler{
 		config:           deps.Config,
+		logger:           deps.Logger,
 		mapHandler:       deps.MapHandler,
 		rulesHandler:     deps.RulesHandler,
 		attributeHandler: deps.AttributeHandler,
@@ -81,7 +85,7 @@ func (ph *ProductImportHandler) RunCSV() {
 
 	rulesConfig, err := ph.rulesHandler.InitRulesConfig()
 	if err != nil {
-		log.Fatalf("ontology was not specified: %v", err)
+		ph.logger.Fatal("ontology was not specified", err)
 	}
 
 	// mappings
@@ -90,7 +94,7 @@ func (ph *ProductImportHandler) RunCSV() {
 	// feed
 	err = ph.runProductValidationImportFlow(columnMap, rulesConfig)
 	if err != nil {
-		log.Printf("Unexpected error: %v", err)
+		ph.logger.Error("Unexpected error", err)
 	}
 }
 
@@ -114,12 +118,12 @@ func (ph *ProductImportHandler) runProductValidationImportFlow(columnMap map[str
 					false,
 				)
 			} else {
-				log.Printf("You have a feed in progress ('%v') that is waiting for attributes corrections. " +
-					"Please check the report in '%v' or move this feed to the '%v' folder " +
+				ph.logger.Warn(fmt.Sprintf("You have a feed in progress ('%v') that is waiting for attributes corrections. "+
+					"Please check the report in '%v' or move this feed to the '%v' folder "+
 					"to get a report once again.",
 					ph.config.ProductCatalog.InProgressPath+"/"+processingFile,
 					ph.config.ProductCatalog.ReportPath,
-					ph.config.ProductCatalog.SourcePath)
+					ph.config.ProductCatalog.SourcePath), nil)
 			}
 		}
 	} else if len(sources) == 0 {
@@ -151,39 +155,39 @@ func (ph *ProductImportHandler) processFeed(
 	var feed []reports.Report
 
 	// source
-	log.Println("_________________________________")
-	log.Printf("PROCESSING SOURCE: '%v'", sourceFeedPath)
+	ph.logger.Info("_________________________________")
+	ph.logger.Info(fmt.Sprintf("PROCESSING SOURCE: '%v'", sourceFeedPath))
 	var er error
 
 	if sourceFeedPath, er = adapters.MoveToPath(sourceFeedPath, ph.config.ProductCatalog.InProgressPath); er != nil {
-		log.Printf("ERROR COPYING THE '%v' FILE to the  '%v' folder", sourceFeedPath, ph.config.ProductCatalog.InProgressPath)
+		ph.logger.Warn(fmt.Sprintf("ERROR COPYING THE '%v' FILE to the  '%v' folder", sourceFeedPath, ph.config.ProductCatalog.InProgressPath), nil)
 	}
 	parsedSourceData, err := ph.productHandler.InitSourceData(sourceFeedPath)
 	if err != nil {
 		wrongFilePath, _ := adapters.MoveToPath(sourceFeedPath, ph.config.ProductCatalog.SentPath)
-		log.Printf("an error occured while reading products data. File was moved to %v.\nReason: %v", wrongFilePath, err)
+		ph.logger.Error(fmt.Sprintf("an error occured while reading products data. File was moved to %v.", wrongFilePath), err)
 		return
 	}
 
 	if isInitial {
 		feed, hasErrors, err = ph.runInitialOntologyValidation(sourceFeedPath, parsedSourceData, columnMap, ruleConfig)
 		if err != nil {
-			log.Printf("ontology validation for products has been failed: %v", err)
+			ph.logger.Error("Ontology validation for products has been failed", err)
 		}
 	} else {
 		feed, hasErrors, err = ph.runSecondaryOntologyValidation(sourceFeedPath, attributesPath, parsedSourceData, columnMap, ruleConfig)
 		if err != nil {
-			log.Printf("ontology validation for attributes and products has been failed: %v", err)
+			ph.logger.Error("Ontology validation for attributes and products has been failed: %v", err)
 		}
 	}
 
 	attributesReportPath := ph.reports.WriteReport(sourceFeedPath, hasErrors, feed, parsedSourceData)
 
 	if !hasErrors {
-		log.Println("Product import to Tradeshift has been started")
+		ph.logger.Info("Product import to Tradeshift has been started")
 		er := ph.importHandler.ImportFeedToTradeshift(attributesReportPath)
 		if er != nil {
-			log.Printf("Product import to Tradeshift has been failed, report was not built. Reason: %v", er)
+			ph.logger.Error("Product import to Tradeshift has been failed, report was not built. Reason: %v", er)
 		}
 	}
 }
@@ -202,17 +206,19 @@ func (ph *ProductImportHandler) runInitialOntologyValidation(
 	)
 
 	if !hasErrors {
-		log.Printf("DATA IS VALID. Please check the result here '%s'", ph.config.ProductCatalog.SentPath)
+		ph.logger.Info(fmt.Sprintf("DATA IS VALID. Please check the result here '%s'", ph.config.ProductCatalog.SentPath))
 		if _, er := adapters.MoveToPath(sourceFeedPath, ph.config.ProductCatalog.SentPath); er != nil {
-			log.Printf("ERROR COPYING THE SOURCE FILE %v to the '%v' folder", sourceFeedPath, ph.config.ProductCatalog.SentPath)
+			ph.logger.Debug(
+				fmt.Sprintf("ERROR COPYING THE SOURCE FILE %v to the '%v' folder", sourceFeedPath, ph.config.ProductCatalog.SentPath),
+				map[string]interface{}{"error": er})
 		}
 
 	} else {
-		log.Printf("The validation has found inconsistency in your attributes based on rules. "+
+		ph.logger.Info(fmt.Sprintf("The validation has found inconsistency in your attributes based on rules. "+
 			"You can find the report here '%v'. You can apply corrections right into this report and upload it "+
 			"into the source folder %v to continue the process.",
 			ph.config.ProductCatalog.ReportPath,
-			ph.config.ProductCatalog.SourcePath)
+			ph.config.ProductCatalog.SourcePath))
 	}
 	return feed, hasErrors, nil
 }
@@ -228,9 +234,10 @@ func (ph *ProductImportHandler) runSecondaryOntologyValidation(
 	var er error
 	var attributeReportData []*attribute.Attribute
 	if attributesPath != "" {
-		log.Printf("PROCESSING REPORT: '%v'", attributesPath)
+		ph.logger.Info(fmt.Sprintf("PROCESSING REPORT: '%v'", attributesPath))
 		if attributesPath, er = adapters.MoveToPath(attributesPath, ph.config.ProductCatalog.InProgressPath); er != nil {
-			log.Printf("ERROR COPYING THE '%v' FILE to the  '%v' folder", attributesPath, ph.config.ProductCatalog.InProgressPath)
+			ph.logger.Debug(fmt.Sprintf("ERROR COPYING THE '%v' FILE to the  '%v' folder", attributesPath, ph.config.ProductCatalog.InProgressPath),
+				map[string]interface{}{"error": er})
 		}
 	} else {
 		return nil, true, fmt.Errorf("empty attributes filename has been detected: %v", attributesPath)
@@ -252,31 +259,36 @@ func (ph *ProductImportHandler) runSecondaryOntologyValidation(
 	)
 
 	if !hasErrors {
-		log.Printf("DATA IS VALID. Please check the result here '%s'", ph.config.ProductCatalog.SentPath)
+		ph.logger.Info(fmt.Sprintf("DATA IS VALID. Please check the result here '%s'", ph.config.ProductCatalog.SentPath))
 		if _, er = adapters.MoveToPath(sourceFeedPath, ph.config.ProductCatalog.SentPath); er != nil {
-			log.Printf("ERROR COPYING THE SOURCE FILE %v to the '%v' folder", sourceFeedPath, ph.config.ProductCatalog.SentPath)
+			ph.logger.Debug(fmt.Sprintf("ERROR COPYING THE SOURCE FILE %v to the '%v' folder", sourceFeedPath, ph.config.ProductCatalog.SentPath),
+				map[string]interface{}{"error": er})
 		}
 
 		if _, er = adapters.MoveToPath(attributesPath, ph.config.ProductCatalog.SentPath); er != nil {
-			log.Printf("ERROR COPYING THE REPORT FILE %v to the '%v' folder", attributesPath, ph.config.ProductCatalog.SentPath)
+			ph.logger.Debug(fmt.Sprintf("ERROR COPYING THE REPORT FILE %v to the '%v' folder", attributesPath, ph.config.ProductCatalog.SentPath),
+				map[string]interface{}{"error": er})
+
 		}
 
 	} else {
-		log.Printf("The validation has found inconsistency in your attributes based on rules. "+
+		ph.logger.Info(fmt.Sprintf("The validation has found inconsistency in your attributes based on rules. "+
 			"You can find the report here '%v'. You can apply corrections right into this report and upload it "+
 			"into the source folder %v to continue the process.",
 			ph.config.ProductCatalog.ReportPath,
-			ph.config.ProductCatalog.SourcePath)
+			ph.config.ProductCatalog.SourcePath))
 		if attributesPath != "" {
 			e := os.Remove(attributesPath)
 
 			if e != nil {
-				log.Println(e)
+				ph.logger.Debug("failed to remove file with attributes", map[string]interface{}{
+					"error": e,
+				})
 			}
 		}
 	}
 
-	cleanUpAttributeReports(sourceFeedPath, ph.config.ProductCatalog.ReportPath)
+	ph.cleanUpAttributeReports(sourceFeedPath, ph.config.ProductCatalog.ReportPath)
 	return feed, hasErrors, nil
 }
 
@@ -297,14 +309,14 @@ func findAttributeReport(inProgressFile string, sources []string) string {
 	return report
 }
 
-func cleanUpAttributeReports(sourceFile string, folder string) {
+func (ph *ProductImportHandler) cleanUpAttributeReports(sourceFile string, folder string) {
 	reportsList := adapters.GetFiles(folder)
 	for _, source := range reportsList {
 		del := findAttributeReport(sourceFile, []string{source})
 		if del != "" {
 			e := os.Remove(folder + "/" + del)
 			if e != nil {
-				log.Println(e)
+				ph.logger.Warn(fmt.Sprintf("failed to clean file with attributes %v", del), e)
 			}
 		}
 	}

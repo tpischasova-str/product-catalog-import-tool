@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"ts/adapters"
+	"ts/utils"
 )
 
 const (
@@ -12,8 +13,6 @@ const (
 	tsCategoryKey  = "Category"
 	tsProductIdKey = "ID"
 )
-
-
 
 func (r *ReportsHandler) writeSuccessReport(report []Report, sourceData []map[string]interface{}, feedFilePath string) string {
 	filePath := filepath.Join(r.SuccessResultPath, buildSuccessFileName(feedFilePath))
@@ -59,11 +58,22 @@ func (r *ReportsHandler) buildSuccessMapRaw(source []map[string]interface{}, rep
 		// setup product attributes from source
 		for attrName, attrValue := range sourceProduct.Attributes {
 			if i, ok := headerIndex[attrName]; ok {
-				attr := findAttributeByName(attrName, productAttrs)
-				if attr != nil {
-					reportItem[i] = fmt.Sprintf("%v", attr.AttrValue)
+				// map UOM attribute value
+				if utils.TrimAll(attrName) == utils.TrimAll(r.ColumnMapConfig.UOM) {
+					reportItem[i] = r.buildUnmappedUOMAttribute(attrName, attrValue, productAttrs)
 				} else {
-					reportItem[i] = fmt.Sprintf("%v", attrValue)
+					//process not UOM attribute
+					attr := findAttributeByName(attrName, productAttrs)
+					if attr != nil {
+						reportItem[i] = fmt.Sprintf("%v", attr.AttrValue)
+						if attr.UoM != "" {
+							if j, ok := headerIndex[buildUOMColumnName(attrName)]; ok {
+								reportItem[j] = r.getUoMDefaultMappedKey(attr.UoM)
+							}
+						}
+					} else {
+						reportItem[i] = fmt.Sprintf("%v", attrValue)
+					}
 				}
 			}
 		}
@@ -72,8 +82,8 @@ func (r *ReportsHandler) buildSuccessMapRaw(source []map[string]interface{}, rep
 			if i, ok := headerIndex[productAttrItem.AttrName]; ok {
 				reportItem[i] = fmt.Sprintf("%v", productAttrItem.AttrValue)
 				if productAttrItem.UoM != "" {
-					if j, ok := headerIndex[buildUOMColumnName(productAttrItem.Name)]; ok {
-						reportItem[j] = productAttrItem.UoM
+					if j, ok := headerIndex[buildUOMColumnName(productAttrItem.AttrName)]; ok {
+						reportItem[j] = r.getUoMDefaultMappedKey(productAttrItem.UoM)
 					}
 				}
 				if productAttrItem.Category != "" {
@@ -106,4 +116,21 @@ func findAttributeByName(attrName string, attributes []Report) *Report {
 		}
 	}
 	return nil
+}
+
+func (r *ReportsHandler) getUoMDefaultMappedKey(value string) string {
+	defaultKey := r.UoMMapConfig.GetDefaultUoMValueByMapped(value)
+	if defaultKey == "" {
+		return value
+	}
+	return defaultKey
+}
+
+func (r *ReportsHandler) buildUnmappedUOMAttribute(attrName string, attrValue string, productAttrs []Report) string {
+	attr := findAttributeByName(attrName, productAttrs)
+	if attr != nil {
+		return r.getUoMDefaultMappedKey(attr.AttrValue)
+	} else {
+		return r.getUoMDefaultMappedKey(attrValue)
+	}
 }

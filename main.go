@@ -30,6 +30,8 @@ func start(
 ) {
 	if prepareImportHandler != nil {
 		prepareImportHandler.Run()
+	} else {
+		log.Println("SKIP")
 	}
 	offerImportHandler.RunCSV()
 	productImportHandler.RunCSV()

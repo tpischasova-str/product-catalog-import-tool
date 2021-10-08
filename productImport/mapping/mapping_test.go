@@ -15,23 +15,25 @@ func Test_mapping_Parse(t *testing.T) {
 		want   *ColumnMapConfig
 	}{
 		{
-			name: "positive: map should be converted to object with ProductID, Category and Name from relative columns",
+			name: "positive: map should be converted to object with ProductID, Category, UOM and Name from relative columns",
 			fields: fields{
 				rawMap: map[string]string{
 					"ID":       "Label1",
 					"Category": "Label2",
 					"Name":     "Label3",
+					"UOM":      "Label4",
 				},
 			},
 			want: &ColumnMapConfig{
 				ProductID:    "Label1",
 				Category:     "Label2",
 				Name:         "Label3",
+				UOM:          "Label4",
 				OtherColumns: []*ColumnItem{},
 			},
 		},
 		{
-			name: "positive: empty map should be converted to MAp Object with default values of ProductID, Category and Name",
+			name: "positive: empty map should be converted to Map Object with default values of ProductID, Category, UOM and Name",
 			fields: fields{
 				rawMap: nil,
 			},
@@ -39,6 +41,7 @@ func Test_mapping_Parse(t *testing.T) {
 				ProductID:    "ID",
 				Category:     "Category",
 				Name:         "Name",
+				UOM:          "UOM",
 				OtherColumns: []*ColumnItem{},
 			},
 		},

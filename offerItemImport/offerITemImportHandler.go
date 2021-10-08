@@ -2,15 +2,16 @@ package offerItemImport
 
 import (
 	"fmt"
-	"log"
 	"path/filepath"
 	"ts/adapters"
+	"ts/logger"
 	offerItemMapping2 "ts/offerItemImport/offerItemMapping"
 	"ts/outwardImport"
 	"ts/outwardImport/importToTradeshift"
 )
 
 type OfferItemImportHandler struct {
+	logger               logger.LoggerInterface
 	outwardImportHandler outwardImport.OutwardImportInterface
 	offerItemMapping     offerItemMapping2.OfferItemMappingHandlerInterface
 	sourcePath           string
@@ -22,6 +23,7 @@ type OfferItemImportHandler struct {
 func NewOfferItemImportHandler(deps Deps) OfferItemImportHandlerInterface {
 	conf := deps.Config.OfferItemCatalog
 	return &OfferItemImportHandler{
+		logger:               deps.Logger,
 		outwardImportHandler: deps.OutwardImportHandler,
 		offerItemMapping:     deps.OfferItemMapping,
 		sourcePath:           conf.SourcePath,
@@ -32,18 +34,18 @@ func NewOfferItemImportHandler(deps Deps) OfferItemImportHandlerInterface {
 }
 
 func (oi *OfferItemImportHandler) Run() {
-	log.Println("_________________________________")
+	oi.logger.Info("_________________________________")
 	files := adapters.GetFiles(oi.sourcePath)
 	if len(files) == 0 {
-		log.Printf("Offer Items import failed: please, put file with offer items into %v", oi.sourcePath)
+		oi.logger.Error(fmt.Sprintf("Offer Items import failed: please, put file with offer items into %v", oi.sourcePath), nil)
 		return
 	}
 
-	log.Println("Import Offer Items to Tradeshift has been started")
+	oi.logger.Info("Import Offer Items to Tradeshift has been started")
 	for _, fileName := range files {
 		err := oi.runOfferItemImportFlow(fileName)
 		if err != nil {
-			log.Println(err)
+			oi.logger.Error("Import Offer Items failed", err)
 		}
 	}
 }
@@ -60,7 +62,7 @@ func (oi *OfferItemImportHandler) runOfferItemImportFlow(fileName string) error 
 
 	err = oi.importToTradeshift(fileName)
 	if err != nil {
-		return fmt.Errorf("failed offerItems import: %v", err)
+		return fmt.Errorf("failed offerItems import to Tradeshift: %v", err)
 	}
 	return nil
 }
@@ -84,9 +86,9 @@ func (oi *OfferItemImportHandler) importToTradeshift(fileName string) error {
 	}
 	switch state {
 	case importToTradeshift.CompleteImportState:
-		log.Println("Offer Items import has been finished successfully")
+		oi.logger.Info("Offer Items import has been finished successfully")
 	default:
-		log.Printf("Offer Items import has been finished with errors. See report here '%v'", oi.reportPath)
+		oi.logger.Warn(fmt.Sprintf("Offer Items import has been finished with errors. See report here '%v'", oi.reportPath), nil)
 	}
 	return nil
 }

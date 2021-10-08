@@ -12,6 +12,7 @@ type ReportsHandler struct {
 	Handler           adapters.HandlerInterface
 	Header            *ReportLabels
 	ColumnMapConfig   *mapping.ColumnMapConfig
+	UoMMapConfig      *mapping.UoMMapConfig
 	productHandler    product.ProductHandlerInterface
 	SuccessResultPath string
 	FailResultPath    string
@@ -34,7 +35,8 @@ func NewReportsHandler(deps Deps) *ReportsHandler {
 	return &ReportsHandler{
 		Handler:           h,
 		productHandler:    deps.ProductHandler,
-		ColumnMapConfig:   m,
+		ColumnMapConfig:   deps.Mapping.GetColumnMapConfig(),
+		UoMMapConfig:      deps.Mapping.GetUoMMapConfig(),
 		Header:            initFailedAttributesReportHeader(m),
 		SuccessResultPath: conf.SuccessResultPath,
 		FailResultPath:    conf.ReportPath,
@@ -62,7 +64,6 @@ func initFailedAttributesReportHeader(m *mapping.ColumnMapConfig) *ReportLabels 
 		CategoryName: "Category Name",
 		AttrName:     "Attribute Name*",
 		AttrValue:    "Attribute Value*",
-		UoM:          "UOM",
 		Errors:       "Error Message",
 		Description:  "Description",
 		DataType:     "Data Type",
@@ -84,6 +85,11 @@ func initFailedAttributesReportHeader(m *mapping.ColumnMapConfig) *ReportLabels 
 		labels.Name = m.Name
 	} else {
 		labels.Name = "Name"
+	}
+	if m.UOM != "" {
+		labels.UoM = m.UOM
+	} else {
+		labels.UoM = "UOM"
 	}
 
 	return &labels

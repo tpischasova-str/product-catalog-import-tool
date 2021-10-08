@@ -1,13 +1,14 @@
 package configModels
 
 type RawProductCatalogConfig struct {
-	SourcePath                 string `yaml:"source"`
-	MappingPath                string `yaml:"mapping"`
-	OntologyPath               string `yaml:"ontology"`
-	SentPath                   string `yaml:"sent"`
-	InProgressPath             string `yaml:"in_progress"`
-	ReportPath                 string `yaml:"report"`
-	SuccessResultPath          string `yaml:"success_result"`
+	SourcePath        string `yaml:"source"`
+	MappingPath       string `yaml:"mapping"`
+	UoMMappingPath    string `yaml:"uom_mapping"`
+	OntologyPath      string `yaml:"ontology"`
+	SentPath          string `yaml:"sent"`
+	InProgressPath    string `yaml:"in_progress"`
+	ReportPath        string `yaml:"report"`
+	SuccessResultPath string `yaml:"success_result"`
 }
 
 type RawOfferCatalogConfig struct {
@@ -24,13 +25,14 @@ type RawOfferItemCatalogConfig struct {
 
 func (c *RawProductCatalogConfig) ToConfig() *ProductCatalogConfig {
 	return &ProductCatalogConfig{
-		SourcePath:                 c.SourcePath,
-		ReportPath:                 c.ReportPath,
-		MappingPath:                c.MappingPath,
-		OntologyPath:               c.OntologyPath,
-		SentPath:                   c.SentPath,
-		InProgressPath:             c.InProgressPath,
-		SuccessResultPath:          c.SuccessResultPath,
+		SourcePath:        c.SourcePath,
+		ReportPath:        c.ReportPath,
+		MappingPath:       c.MappingPath,
+		UoMMappingPath:    c.UoMMappingPath,
+		OntologyPath:      c.OntologyPath,
+		SentPath:          c.SentPath,
+		InProgressPath:    c.InProgressPath,
+		SuccessResultPath: c.SuccessResultPath,
 	}
 }
 

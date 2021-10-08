@@ -2,6 +2,7 @@ package reports
 
 import (
 	"reflect"
+	"sort"
 	"testing"
 	"ts/productImport/mapping"
 )
@@ -18,8 +19,7 @@ func Test_buildHeader(t *testing.T) {
 		want  []string
 		want1 map[string]int64
 	}{
-		// tests for manual run only
-		/*	{
+			{
 				name: "positive: success report header should be built in Tradeshift format(with default column values for productID and Category)",
 				args: args{
 					source: map[string]interface{}{
@@ -252,17 +252,24 @@ func Test_buildHeader(t *testing.T) {
 					"Attribute1":     3,
 					"Attribute1_UOM": 4,
 				},
-			},*/
+			},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, got1 := buildSuccessReportHeader(tt.args.source, tt.args.reportItems, tt.args.columnMap)
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("buildSuccessReportHeader() got = %v, want %v", got, tt.want)
+			if !reflect.DeepEqual(got[0:2], tt.want[0:2]) {
+				t.Errorf("buildSuccessReportHeader() actual column names with fixed positions (ID, Category): %v, \n expected %v", got[0:2], tt.want[0:2])
 			}
-			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("buildSuccessReportHeader() got1 = %v, want %v", got1, tt.want1)
+
+			sort.Strings(got)
+			sort.Strings(tt.want)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("buildSuccessReportHeader() actual column names with not fixed position: %v, \nexpected %v", got, tt.want)
+			}
+
+			if !reflect.DeepEqual(getIndexKeys(got1), getIndexKeys(tt.want1)) {
+				t.Errorf("buildSuccessReportHeader() actual columns in index: %v,\nexpected: %v", got1, tt.want1)
 			}
 		})
 	}
@@ -328,11 +335,32 @@ func TestHeaderBuilder_buildSuccessReportHeader(t *testing.T) {
 				attributes: tt.fields.attributes,
 				columnMap:  tt.fields.columnMap,
 			}
-			if got := h.buildSuccessReportHeader(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("buildSuccessReportHeader() = %v, want %v", got, tt.want)
+			got := h.buildSuccessReportHeader()
+			if !reflect.DeepEqual(got.headerTs[0:1], tt.want.headerTs[0:1]) {
+				t.Errorf("buildSuccessReportHeader() required columns = %v, want %v", got.headerTs[0:1], tt.want.headerTs[0:1])
 			}
+			sort.Strings(got.headerTs)
+			sort.Strings(tt.want.headerTs)
+			if !reflect.DeepEqual(got.headerTs, tt.want.headerTs) {
+				t.Errorf("buildSuccessReportHeader()  sorted header columns = %v, want %v", got.headerTs[0:1], tt.want.headerTs[0:1])
+			}
+
+			if !reflect.DeepEqual(getIndexKeys(got.headerIndex), getIndexKeys(tt.want.headerIndex)) {
+				t.Errorf("buildSuccessReportHeader() header index = %v, want %v", got.headerIndex, tt.want.headerIndex)
+			}
+			//todo get first 2 columns
 		})
 	}
+}
+
+
+func getIndexKeys(input map[string]int64)[]string{
+	var res []string
+	for key,_ := range input{
+		res = append(res, key)
+	}
+	sort.Strings(res)
+	return res
 }
 
 func Test_buildUOMColumnName(t *testing.T) {
